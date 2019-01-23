@@ -1,0 +1,36 @@
+<!doctype>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body>
+    <div id="divElement">内存泄露测试</div>
+    <button onclick="gc(event)">回收内存</button>
+    <script type="text/javascript">
+    (function(exports){
+        var image = null;
+        //当一个函数创建时，会把他当前的作用域链保存起来，并且成为函数内部状态的一部分。这种代码和作用域的综合体就称为一个闭包。
+        function gc(evt){
+            //image = null; 执行之后就会释放 image元素
+            //gc闭包中的image和image是共享同一份拷贝，会互相影响
+            image = null;
+            //或者
+            //exports.gc = null;
+        }
+
+        var report = function (cgiUrl, param) {
+            image = document.createElement('img');
+            //image创建的时候注定就会内存泄露
+
+            //如果把image导出到全局可以访问，将不会出现内存泄露
+            //exports.image = image;
+        };
+
+        report();
+
+        //导出gc将会导致gc闭包中维持的image得以保留
+        exports.gc = gc;
+    })(window);
+    </script>
+</body>
+</html>

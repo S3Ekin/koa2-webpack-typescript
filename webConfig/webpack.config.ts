@@ -6,11 +6,14 @@ const cleanWebpackPlugin = require("clean-webpack-plugin");
 const copyPlugin = require("copy-webpack-plugin");
 const StyleLint =require("stylelint-webpack-plugin");
 const  MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const htmlPlugin = require("html-webpack-plugin");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 class WebpackWebConfig implements Configuration{
 
 	target:Configuration["target"] = "web";
 	mode:Configuration["mode"] = "production";
+	devtool:Configuration["devtool"] = "inline-source-map";
 	entry = [path.resolve("./","src/index.ts")];
 	output = {
 		path:path.resolve("./","public"),
@@ -25,7 +28,7 @@ class WebpackWebConfig implements Configuration{
 					{
 						loader:"ts-loader",
 						options:{
-							  transpileOnly: true,
+					//		  transpileOnly: true,
                 configFile: path.resolve("./", 'webConfig/tsconfig.json')
 						}
 					}
@@ -56,7 +59,14 @@ class WebpackWebConfig implements Configuration{
 		]
 	};
 	resolve = {
-		extensions:[".ts",".js",".json"]
+		extensions:[".ts",".js",".json"],
+		modules: ['node_modules'],
+	  plugins: [new TsconfigPathsPlugin({configFile: "./tsconfig.json"})],
+		alias: { //配置绝对路径的文件名
+            css: path.resolve("./", 'src/css'),
+            js: path.resolve("./", 'src/js'),
+            assert: path.resolve("./", 'src/assert'),
+    },
 	};
 
 	plugins = [
@@ -74,6 +84,13 @@ class WebpackWebConfig implements Configuration{
         errored:true,
         syntax: 'scss',
         fix:true,	
+		}),
+		new htmlPlugin({
+			title:"koa",
+			filename:"index.html",
+			inject:"body",
+			template:path.resolve("./","src/index.html"),
+		//	chunks:""
 		})
 	];
 

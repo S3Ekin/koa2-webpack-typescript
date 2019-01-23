@@ -1,0 +1,34 @@
+$themeColor:#00a0e9;
+$default:#ececec;
+$width:300px;
+$slectColor:#aee6ff;
+$border:#E4E4E4;
+$borderWidth:1px;
+$borederRadius:4px;
+$hover:$themeColor;
+
+.g-tree-search{
+	display: flex;
+	justify-content: space-between;	
+	.j-search{
+		
+	}
+	.j-search-close{
+
+	}
+	.m-inp{
+		flex: auto;
+	}
+
+
+}
+
+.m-tree{
+	line-height: 1.5;
+  .tree-indent{
+  	width: 1em;
+  	display: inline-block;
+  }
+	
+
+}

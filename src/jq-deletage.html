@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+  <link rel="stylesheet" href="./lib/easyui/css/easyui.css">
+  <style>
+
+  
+  </style>
+<script src="./lib/easyui/js/jquery-3.3.1.js" ></script>
+<script src="./lib/easyui/js/jquery.panel.js" ></script>
+<script src="./lib/easyui/js/jquery.combo.js" ></script>
+<script src="./lib/easyui/js/jquery.combobox.js" ></script>
+<!-----------------------------测试代码开始-------------------------------->
+<body>
+
+<div id="test_combobx">
+  <div class="test"></div>
+  <div class="test"></div>
+  <div class="test"></div>
+  <div class="test"></div>
+</div>
+<script>
+  let mix = (object) => ({
+    with: (...mixins) => mixins.reduce(
+      (c, mixin) => Object.create(
+        c, Object.getOwnPropertyDescriptors(mixin)
+      ), object)
+  });
+
+// multiple mixins example
+let a = {a: 'a'};
+let b = {b: 'b'};
+let c = {c: 'c'};
+let d = mix(c).with(a, b);
+
+d.c // "c"
+d.b // "b"
+d.a // "a"
+</script>
+
+
+<script type="text/javascript"> 
+  
+   
+
+ 
+
+</script>
+<!-----------------------------测试结束-------------------------------------->
+</body>
+</html>

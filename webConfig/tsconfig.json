@@ -1,15 +1,23 @@
 {
     "compilerOptions": {
-        "module": "es2015",
+        "module":"es2015",
         "noImplicitAny": true,
         "sourceMap": true,
         "isolatedModules": true,
-        "target": "es5",
+        "target":"es5",
         "strictNullChecks": true,
         "noUnusedLocals": true,
         "noUnusedParameters": true,
-        "inlineSources": false,
-        "lib": ["es2015"]
+        "downlevelIteration":true,
+         "typeRoots":[
+             "typings"
+         ],
+        "baseUrl": ".", 
+         "paths": {
+              "@SDom/*": ["../src/js/common/*"],
+              "@CommonCss/*": ["../src/css/common/*"]
+         },
+        "lib": ["es7","dom"]
     },
     "exclude": [
         "node_modules",

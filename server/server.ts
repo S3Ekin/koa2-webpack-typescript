@@ -12,8 +12,6 @@ let  currentApp = app.callback();
 const server = http.createServer(currentApp);
 const config = new WebpackWebConfig("development");
 
-console.log(config,"rrr");
-
 const devServer = {
 							noInfo: false,
 							quiet: false,

@@ -1,0 +1,114 @@
+$themeColor:#00a0e9;
+$inpBg:white;
+$height:40px;
+$default:#ececec;
+$width:300px;
+$slectColor:#aee6ff;
+$border:#E4E4E4;
+$borderWidth:1px;
+$borederRadius:4px;
+$hover:$themeColor;
+
+/* 下拉框 */
+.s-comboBox{
+	$height:40px;
+	position: relative;
+	cursor: pointer;
+	width: $width;
+	&:hover{
+		.combo-inp{
+			border-color: $themeColor;
+		}
+	}
+	.combo-inp{
+		border-radius:$borederRadius;
+		border: solid $borderWidth $default;
+		height:$height;
+		display: flex;
+	  align-items: center;	
+	  cursor: pointer;
+	  .inp-box{
+	  	height: 100%;
+	  	flex:auto;
+	  	box-sizing: border-box;
+	  }
+		.combo-text{
+			width:100% ;
+			text-indent:1em;
+			height: 100%;
+			border:none;
+			outline:none; 
+			background: none;
+			cursor: pointer;
+		}
+		/* 文本框 */
+		.s-textarea{
+		  padding-top:12px;
+		  resize: none;
+		  vertical-align: middle;
+		 
+		}
+		.slide-icon{
+			color:darken($border,50%);
+			text-align: center;
+			width:30px;
+			transition: transform .3s linear;
+		}
+		
+	}
+	.combo-inp.no-fill{
+		border-color: red;	
+	}
+	.combo-drop{
+		width:100%;
+		top:$height + 4;
+		position: absolute;
+		display:none;
+		background:$inpBg;
+		border:1px solid $default;
+		box-shadow: 2px 3px 18px 0px rgba(0, 0, 0, 0.16);
+		border-radius:4px ;
+		padding:8px;
+		box-sizing:border-box;
+		z-index:2;
+		transform:translateY(-80%);
+		max-height:280px;
+		overflow:auto;
+	/* 	.drop-ul{
+		max-height:280px;
+		overflow:auto;
+	} */
+		.drop-item {
+			padding:4px 8px;
+			&:hover{
+				background: $hover;
+			}
+		}
+		.drop-item.active {
+			background-color: #aee6ff;
+			border-radius: 2px;
+		}
+	}
+}
+.s-comboBox.active{
+	.slide-icon{
+		transform: rotate(-180deg);
+	}
+	.combo-drop{
+		visibility:visible;
+		opacity:1;
+		transform:translateY(0);
+	}
+}
+
+.u-drop-up{
+	.combo-drop{
+		top:0;
+	}
+}
+.u-drop-up.active{
+	.combo-drop{
+		transform:translateY(-100%);
+	}
+}
+

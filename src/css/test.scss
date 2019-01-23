@@ -1,4 +1,36 @@
-.page{
+
+@import "./common/common.scss" ;
+@import "./common/normalize.css" ;
+
+
+.m-box{
 	background: red;
-	font-size: 38px;
+//	margin: 15px;
+	padding:0;
+	width: 100px;
+	height: 100px;
+	position: absolute;
+	top: 0;
+	left: 0;
+	cursor: pointer;
+
+}
+
+#event{
+	margin:200px auto;
+  width: 600px;
+  border: 2px solid red;
+  .child{
+		margin: 20px;
+		width: 300px;
+		min-height: 100px;
+		background: green;
+  }
+
+  .lev3{
+  	background: black;
+  	width: 200px;
+		height: 70px;		
+		margin: 30px;
+  }
 }

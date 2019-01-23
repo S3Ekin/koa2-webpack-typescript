@@ -9,8 +9,13 @@
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "inlineSources": false,
-    "lib": ["es2015"]
+     "downlevelIteration":true,
+    "lib":["es7","dom"],
+     "baseUrl": "src", 
+     "paths": {
+          "@SDom/*": ["js/common/*","js/common/Dom/*"],
+          "@CommonCss/*": ["css/common/*"]
+     }
   },
   "exclude":[
   	 "node_modules",
