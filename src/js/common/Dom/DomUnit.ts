@@ -5,22 +5,28 @@ import {animate} from "velocity-animate";
 
 			dom:HTMLElement[];
 			init(selector:string):this;
-			addClass(className:string | string[]):this;
-			toggleClass(className:string):this;
 			removeClass(className:string | string[]):this;
+			toggleClass(className:string):this;
+			addClass(className:string | string[]):this;
 			html(htmlStr:string):this;
 			hasClass(className:string):boolean;
-			remove():void;
 			on(type:string,selector:string|Function,fn?:Function):void;
 			off(type?:string,selector?:string|Function,fn?:Function):void;
 			addOriginEvent(type:string,fn:Function):void;
+			remove():void;
 			find(selector:string):DomUinit;
-			closest(str:string|null):DomUinit;
 			show():this;
 			hide():this;
 			toggleShow():this;
-			attr(prop:string):string|null;
+			closest(str:string|null):DomUinit;
+			css(style:{[propName:string]:string}):void;
+			parent():DomUinit;
+			siblings(selctor?:string):DomUinit;
+			children(selctor?:string):DomUinit;
+			getEleStyle(ele:HTMLElement,prop:string,pseudoElt?:string):string;
 			val(value?:string):string|undefined;
+			checked(value:boolean):void;
+			attr(prop:string):string|null;
 			eq(oindex:number):DomUinit;
 			dataset(key:string):string | undefined;
 			velocity(props:Object,options:Object):any;
@@ -267,7 +273,7 @@ class DomUinit extends EventDom implements SDom{
 
 				selfUnit.showEle(val);
 
-			});
+			})
 
 			return this;
 		}
@@ -338,38 +344,69 @@ class DomUinit extends EventDom implements SDom{
 					let cssText:string = val.style.cssText;
 
 					for(let item in style){
-							cssText += style[item];
+							cssText += (item+":"+style[item]+";");
 					}
 
 					val.style.cssText = cssText ;
 
 			});
 		}
-
-		siblings(selctor?:string):DomUinit{
-
+		parent():DomUinit{
 			const dom = this.dom[0];
-			const domPar = dom.parentElement!;
-			let newDom:HTMLElement[] = [];
-
 			if(!dom){
 				return new DomUinit();
 			};
 
+			let newDom:HTMLElement[] = [<HTMLElement>dom.parentElement];
+			return new DomUinit(newDom) ;
+
+		}
+		siblings(selctor?:string):DomUinit{
+
+			const dom = this.dom[0];
+			let newDom:HTMLElement[] = [];
+			if(!dom){
+				return new DomUinit();
+			};
+			const domPar = dom.parentElement!;
+			newDom = <HTMLElement[]>Array.from(domPar.children).filter((val:HTMLElement)=>{
+								return val !== dom ;
+							});
 			if(selctor){
+          
+         const is_ClassName =  selfUnit.judgeIdOrClassName(selctor);
 
-				newDom = domPar.querySelectorAll(selctor) as any;
-			
-			}else{
-
-				newDom = <HTMLElement[]>Array.from(domPar.children).filter((val:HTMLElement)=>{
-					return val !== dom ;
-				});
-
+         newDom = is_ClassName ? newDom.filter((val:HTMLElement)=>{
+         			return val.classList.contains(selctor.slice(1));
+         }) : [newDom.find((val:HTMLElement)=>{
+         			return val.id === selctor.slice(1);
+         }) as HTMLElement];
 			}
 
 			return new DomUinit(newDom);
 
+		}
+
+		children(selctor?:string){
+			const dom = this.dom[0];
+			let newDom:HTMLElement[] = [];
+			if(!dom){
+				return new DomUinit();
+			};
+			newDom = <HTMLElement[]>Array.from(dom.children);
+			if(selctor){
+          
+          const slectorName = selctor.slice(1) ;
+          const is_ClassName =  selfUnit.judgeIdOrClassName(selctor);
+
+         newDom = is_ClassName ? newDom.filter((val:HTMLElement)=>{
+         			return val.classList.contains(slectorName);
+         }) : [<HTMLElement> newDom.find((val:HTMLElement)=>{
+         			return val.id === slectorName ;
+         })];
+			}
+
+			return new DomUinit(newDom);
 		}
 
 		getEleStyle(ele:HTMLElement,prop:string,pseudoElt?:string):string{
@@ -377,7 +414,7 @@ class DomUinit extends EventDom implements SDom{
 	  }
 	  val(value?:string){
 
-	  	if(value){
+	  	if(value !== undefined){
 				
 				this.dom.forEach((val:HTMLInputElement)=>{
 		  			val.value = value;
@@ -388,6 +425,13 @@ class DomUinit extends EventDom implements SDom{
 	  			return inpDom && inpDom.value;
 	  	}
 	  }
+	  checked(value:boolean=true){
+				
+				this.dom.forEach((val:HTMLInputElement)=>{
+		  			val.checked = value;
+		  	}); 
+	  }
+
 	  attr(prop:string):string|null{
 
 	  	const dom = this.dom[0];
@@ -405,10 +449,17 @@ class DomUinit extends EventDom implements SDom{
 	  	return dom ? new DomUinit([dom]) : new DomUinit();
 	  	
 	  }
-	  dataset(key:string){
+	  dataset(key:string,value?:string){
 
-
-	  	return this.dom[0] &&  this.dom[0].dataset[key] ; 
+	  	if(this.dom[0]){
+	  		if(value!==undefined){
+	  			this.dom[0].dataset[key]  = value ;
+	  		}else{
+	  			return this.dom[0].dataset[key] ;
+	  		}
+	  		
+	  	}
+	  	
 
 	  }
 	  velocity(props={},options={}){

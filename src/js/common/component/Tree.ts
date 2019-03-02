@@ -13,16 +13,23 @@ interface treeConfig {
 			"checkbox":boolean;//是否多选 true :多选
 			"isAnimate":boolean;
 			"clickCallback":Function|null;//点击后的回调函数
+			"checkCallback":Function|null;//选中的回调函数
 			"width":number | null;
 			"MaxHeight":number; //下拉框的最大高度
 			"searchInp":boolean;//inp搜索
 			"searchFile":string[];//搜索的字段
+			"judgeRelation":Function;
 };
 
 interface tree {
 	 box:DomUinit;
 	 config:treeConfig;
-	 renderTreeInit(defaultSel:(string|number)[]):void; 
+	 selArr:any[];
+	 renderTreeInit(keyWord:string):void; 
+	 renderPar(obj:any,node:any,childrenArr:any[],lev:number):string;
+	 renderChild(obj:any,node:any,lev:number):string;
+	 setHasCheck(parItem:DomUinit):void;
+	 cascsdeCheckbox(checkbox:DomUinit):void;
 	 handle():void;
 };
 
@@ -31,13 +38,14 @@ interface tree {
 class Tree implements tree {
 	box:DomUinit;
 	config:treeConfig;
-	constructor(el:DomUinit,config:object,defaultArr:(string|number)[] = []) {
+	selArr:any[];
+	constructor(el:DomUinit,config:object,defaultArr?:(string|number)[]) {
 
 		this.box = el;
 		this.config = Object.assign({
 			"data":[],//数据
 			"dropParIcon":"icon icon-folder-minus",//目录选项的logo
-			"dropChildIcon":"",//文件选项的logo
+			"dropChildIcon":"icon icon-calendar",//文件选项的logo
 			"textField":"text",//文本字段
 			"idField":"id",//id 字段
 			"childField":"children",//children 字段
@@ -45,11 +53,19 @@ class Tree implements tree {
 			"checkbox":false,//是否多选 true :多选
 			"isAnimate":true,
 			"clickCallback":null,//点击后的回调函数
+			"checkCallback":null,
 			"width":null,
 			"MaxHeight":280, //下拉框的最大高度
 			"searchInp":true,
 			"searchFile":["id"],
+			"judgeRelation":function(val:any){
+				
+					return val[this.childField] ? val[this.childField].length > 0 : false;
+			}
 		},config);
+		this.selArr = [];
+		this.initSelArr();
+		this.handle();
 		this.init(defaultArr);
 		
 	}
@@ -66,28 +82,165 @@ class Tree implements tree {
 				<button class="s-btn j-search"><i class="fa fa-search-plus"></i></button>
 		 </div>
 	 */
-	init(defaultArr:(string|number)[] = []){
-
-		const  tree = this.renderTreeInit(defaultArr);
+	init(defaultArr:(string|number)[]=[]){
+		const  tree = `<ul class="m-tree par-menu">${this.renderTreeInit()}</ul>`;
 		const searchStr = this.renderSearchInp();
-
 		this.box.html(searchStr+tree);
+	  defaultArr.length && this.selDefault(defaultArr,this.box);
+	  
+	}
+
+	initSelArr(){
+			this.box.dom.forEach((val:HTMLElement,index:number)=>{
+					val.dataset.index = index+"";
+					this.selArr[index] = [] ;
+			});
+	}
+
+	reloadTree($box:DomUinit,dropUlstr:string){
+
+			const index = <string>$box.dataset("index");
+      $box.children(".m-tree").html(dropUlstr);
+
+       this.selDefault(this.selArr[+index],$box);
+
+	}
+	selDefault(defaultArr:any[],$box:DomUinit){//有初始值
+
+
+
+		defaultArr.forEach((val:(number | string))=>{
+
+				const item =	$box.find(`.treeItem[data-id='${val}'] .tree-inp`);
+
+				 item.dom.forEach((checkbox:HTMLElement)=>{
+
+				 		checkbox.click();
+
+				 })
+
+		});
+
+		
+
+
+	}
+	getOption(){
+
+		return this.config;
 	}
 	renderSearchInp():string{
      
 			return 	`
 				<div class="g-tree-search">
 					<label class="m-inp">
-							<input type="text" class="s-inp" placeholder="搜索...">
+							<input type="text" class="s-inp search-inp" placeholder="搜索...">
 							<span class="j-search-close">
-								<i class="fa fa-times"></i> 
+								<i class="icon icon-close"></i> 
 							</span>
 					</label>
-					<button class="s-btn j-search"><i class="fa fa-search-plus"></i></button>
+					<button class="s-btn j-search"><i class="icon icon-plus-square"></i></button>
 			 </div>
 			`;
 
+	};
+
+	findNodeById(id:string){
+		const {data,idField,childField} = this.config;
+	
+		let node;
+
+		let fn = function(arr:any[]):any{
+			
+						return arr.find((val:any)=>{
+
+								const children = val[childField];
+								const status = val[idField] == id ;
+								if(status){
+										node = val ;
+								}
+								
+								if( children && children.length){
+
+									return status || fn(children); // 要是目录匹配就不找了，否则继续递归找
+
+								}else{
+
+									return status
+								}
+							
+						});
+		}
+
+		fn(data);
+		return node ;
+	
 	}
+
+	search($btn:DomUinit){
+		const $box = $btn.closest(".g-tree");
+		const keyWord = (<string>$box.find(".search-inp").val()).trim();
+		if(keyWord){
+			let str = this.renderTreeInit(keyWord);
+			 		str = str ? str : "<li>没有搜索到任何结果！</li>";
+					this.reloadTree($box,str);
+		}
+	
+
+	}
+
+	renderTreeInit(keyWord:string=""):string{
+	
+	 
+
+    const {textField,idField,childField,checkbox,data,dropChildIcon,dropParIcon,dropFormatter} = this.config;
+
+    let commonObj = {
+    			id:idField,
+    			text:textField,
+    			checkbox,
+    			dropFormatter,
+    };
+
+    const parObj = Object.assign({},commonObj,{
+    	icon:dropParIcon,
+    	child:childField,
+    });
+
+    const childObj = Object.assign({},commonObj,{
+    	icon:dropChildIcon
+    });
+
+
+
+    const funmap = (_data:any,lev:number=-1)=>{
+ 				
+ 				lev++;
+		 	
+		 		return _data.reduce((total:any[],node:any)=>{
+
+		    	const children = node[childField];
+		    	const text = <string>node[textField];
+		    	const type = this.config.judgeRelation(node);
+
+		    	if(type){
+			    	
+			    	 const childrenArr = children && children.length ? funmap(children,lev) : [];
+			    	 
+		   			 keyWord ? ( childrenArr.length && total.push(this.renderPar(parObj,node,childrenArr,lev))): total.push(this.renderPar(parObj,node,childrenArr,lev));
+
+		    	}else{
+		    		keyWord ? (text.includes(keyWord) && total.push(this.renderChild(childObj,node,lev)) ): total.push(this.renderChild(childObj,node,lev));
+		    	}
+
+		    	return total ;
+		    },[]);
+    };
+    const str = funmap(data);
+    return str.join("") ;
+	}
+
+	
   /**
    * [renderTreeInit description]
    * @param {(string|number)[] = []} defaultArr [description]
@@ -96,7 +249,7 @@ class Tree implements tree {
 				<li data-lev="3" class="tree-li">
 					<div class="menuItem par-item" data-id="206">
 						<span class="indent"></span><span class="indent"></span><span class="indent"></span>
-						<span class="s-checkbox">
+						<span class="m-checkbox">
 							<input type="checkbox" class="par-checkinp tree-inp" value="206"><label class="fa fa-square-o"></label>
 						</span>
 						<i class="fa fa-folder-open-o"></i>
@@ -110,113 +263,227 @@ class Tree implements tree {
 			</ul>
 	 * 
    */
-	renderTreeInit(defaultArr:(string|number)[] = []):string{
 	
-	 
-    defaultArr;
-    const {textField,idField,childField,checkbox,data,dropChildIcon,dropParIcon} = this.config;
-
-    let commonObj = {
-    			id:idField,
-    			text:textField,
-    			checkbox,
-
-    };
-
-    const parObj = Object.assign(commonObj,{
-    	icon:dropParIcon,
-    	child:childField,
-    });
-
-    const childObj = Object.assign(commonObj,{
-    	icon:dropChildIcon
-    });
-
-    const funmap = (_data:any,lev:number=0)=>{
- 				lev++;
-		 		return _data.map((node:any)=>{
-
-		    	const children = node[childField];
-          
-		    	if(children){
-
-		    		const childrenArr = funmap(children,lev);
-
-		    		return this.renderPar(parObj,node,childrenArr,lev);
-
-		    	}else{
-		    		return this.renderChild(childObj,node,lev);
-		    	}
-
-		    });
-    };
-    const str = funmap(data);
-    return `<ul class="m-tree">${str.join("")}</ul>`;
-	}
-
 	renderPar(obj:any,node:any,childrenArr:any[],lev:number){
 
-		const {id,text,checkbox,icon} = obj;
+		const {id,text,checkbox,icon,dropFormatter} = obj;
 
 		// 层级缩进
 		const indent = Array.from({length:lev},()=>`<span class="tree-indent"></span>`);
 		//选择框
-    const checkboxStr = checkbox ? `<span class="s-checkbox">
+    const checkboxStr = checkbox ? `<span class="m-checkbox">
 							<input type="checkbox" class="par-checkinp tree-inp" value="${node[id]}"><label class="fa fa-square-o"></label>
 						</span>` : "";
 
+		const childStr = childrenArr.join("") ;
+
 		return `
-				<div class="treeItem children-item" data-id="${id}" data-lev="${lev}">
+				<li><div class="treeItem par-item" data-id="${node[id]}" data-lev="${lev}">
 					  ${indent.join("")}
 						${checkboxStr}
-						<i class="${icon}"></i>
-						<span class="item-txt"> ${node[text]}</span>
+						<i class="${icon}  j-slide-icon"></i>
+						<span class="item-txt"> ${dropFormatter ? dropFormatter(node): node[text]}</span>
 				</div>
-				<ul class="par-menu">
-						${childrenArr.join("")}
-				</ul>
+				${childStr ? `<ul class="par-menu">${childStr}</ul>`:""}
+				</li>
 		`;
-
-
 	}
 	renderChild(obj:any,node:any,lev:number){
 
-		const {id,text,checkbox,icon} = obj;
+		const {id,text,checkbox,icon,dropFormatter} = obj;
 
 		// 层级缩进
 		const indent = Array.from({length:lev},()=>`<span class="tree-indent"></span>`);
 		//选择框
-    const checkboxStr = checkbox ? `<span class="s-checkbox">
-							<input type="checkbox" class="par-checkinp tree-inp" value="${node[id]}"><label class="fa fa-square-o"></label>
+    const checkboxStr = checkbox ? `<span class="m-checkbox">
+							<input type="checkbox" class="child-checkinp tree-inp" value="${node[id]}"><label class="fa fa-square-o"></label>
 						</span>` : "";
 
 		return `
-				<div class="treeItem children-item" data-id="${node[id]}" data-lev="${lev}">
+				<li><div class="treeItem children-item" data-id="${node[id]}" data-lev="${lev}">
 					  ${indent.join("")}
 						${checkboxStr}
 						<i class="${icon}"></i>
-						<span class="item-txt"> ${node[text]}</span>
-				</div>
+						<span class="item-txt"> ${dropFormatter ? dropFormatter(node): node[text]}</span>
+				</div></li>
 		`;
-
 	}
 
+	setHasCheck(parItem:DomUinit){
+
+		let par = parItem;
+		while(par.dom.length){
+				const inpEl =  par.find(".tree-inp");
+				(<HTMLInputElement>inpEl.dom[0]).checked = false;	
+				inpEl.siblings().addClass("has-check");
+				par = par.closest(".par-menu").siblings(".par-item");
+		}
+	}
+
+	upDateSelArr($this:DomUinit){
+
+		//const hasPar = $this.hasClass("par-checkinp");
+
+
+
+				const $box = $this.closest(".g-tree");
+				const idArr = $box.find(".child-checkinp:checked").dom.map((val:HTMLInputElement)=>val.value);
+				const index = <string>$box.dataset("index");
+				this.selArr[+index] = idArr;
+			
+
+	
+
+
+
+		 /*const boxIndex = <string>inpEl.closest(".g-tree").dataset("index");
+		 const val = inpEl.val();
+					if(checkStatus){
+							this.selArr[+boxIndex].push(val);
+					}else{
+							this.selArr[+boxIndex] = this.selArr[+boxIndex].filter((_val:any)=>_val!=val);
+					}*/
+
+	}
+	//级联的checkbox
+	cascsdeCheckbox(gCheckbox:DomUinit){
+
+		const {checkCallback} = this.config;
+		const inpEl  = gCheckbox.children(".tree-inp");
+		const is_par = inpEl.hasClass("par-checkinp");
+		const checkStatus = (<HTMLInputElement>inpEl.dom[0]).checked;
+	  let parItem = gCheckbox.parent();
+
+	 
+	 if(is_par){
+	 		const listUl = parItem.siblings(".par-menu");
+			listUl.find(".tree-inp").checked(checkStatus);
+			inpEl.siblings().removeClass("has-check");
+			listUl.find(".has-check").removeClass("has-check")
+	
+		}
+
+	
+	 	let  listUL = parItem.closest(".par-menu");
+				parItem = listUL.siblings(".par-item");
+		while(parItem.dom.length){
+			 const $curInpEl = parItem.find(".tree-inp");
+						 const curInpEl = <HTMLInputElement>$curInpEl.dom[0];
+
+						 const allChildInp =  listUL.find(".tree-inp");
+						 const allChildInpChecked = listUL.find(".tree-inp:checked");
+						
+						 const val = allChildInp.dom.length - allChildInpChecked.dom.length ;
+						 
+						 if(val === 0){ // 全选
+
+						 		curInpEl.checked = true ;
+						 		$curInpEl.siblings().removeClass("has-check");
+
+						 }else if(val === allChildInp.dom.length ){ //没选一个
+
+						    curInpEl.checked = false ;
+						    $curInpEl.siblings().removeClass("has-check");
+
+						 }else{ //  选了部分
+
+					 			this.setHasCheck(parItem);
+						 		break ;
+						 }
+
+							listUL = parItem.closest(".par-menu");
+							parItem = listUL.siblings(".par-item");
+
+		};
+
+		if(checkCallback){
+			const node = this.findNodeById(<string>inpEl.val())
+			checkCallback(node);
+		}
+
+	}
+	slecteNode($this:DomUinit){
+
+		 const type = $this.hasClass("par-item");
+		 const $box = $this.closest(".m-tree");
+		 const {clickCallback,checkbox} = this.config;
+		 const inp = $this.find(".tree-inp") ;
+		
+
+		 if(!type && !checkbox){
+		 	  $box.find(".node-select").removeClass("node-select");
+		 		$this.addClass("node-select");
+		 }
+
+		 if(clickCallback){
+			 const id = <string>inp.val();
+			 const node = this.findNodeById(id);
+			 clickCallback(node,checkbox);
+		}
+
+	}
 	handle(){
+
+		const _self = this ;
+		// 收缩子内容
+		this.box.on("click",".j-slide-icon",function(){
+				const $this = DM(this);
+				const parEl = $this.closest(".par-item");
+			
+			const status = parEl.hasClass("menu-hide") ? "slideDown" : "slideUp";
+				
+			 parEl.siblings(".par-menu").velocity(status,{duration:300,complete:function(){
+						if(status === "slideDown"){
+							parEl.removeClass("menu-hide");
+						}else{
+							parEl.addClass("menu-hide");
+						}
+			}});
+		});
+
+		//点击checkbox
+		this.box.on("click",".m-checkbox",function(e:Event){
+			e.stopPropagation();
+			const $this = DM(this);
+		  _self.cascsdeCheckbox($this); 
+		  _self.upDateSelArr($this);
+
+		});
+
+		//点击 item
+		this.box.on("click",".treeItem",function(){
+			const $this = DM(this);
+			_self.slecteNode($this);
+		});
+
+		//搜索
+		this.box.on("click",".j-search",function(){
+				const $this = DM(this);
+				_self.search($this);
+				$this.siblings(".m-inp").children(".j-search-close").show();
+
+		});
+
+		this.box.on("click",".j-search-close",function(){
+
+					const $this = DM(this);
+					 $this.hide();
+					 $this.siblings(".search-inp").val("");
+					 const $box = $this.closest(".g-tree");
+					_self.reloadTree($box,_self.renderTreeInit());
+
+
+		});
 
 	}
 }
 
 function Test(){
 
-
-
-
-
-
   let testData:any[] = [
   	{
   		text:"节点",
-  		id:1
+  		id:1,
   	},
   	{
   		text:"兄弟节点1",
@@ -238,32 +505,61 @@ function Test(){
   	}
   ];
 
-  let leg = 30 ;
+  let leg =  5;
 
   let temp:any = testData[0];
 
+  let id = 1 ;
+
   do{
 
-  	let {id} = temp;
+  	//let {id} = temp;
 
-    temp.children = [{id:++id,text:`节点层级${id}`}];
+  	id+=2 ;
+
+    temp.children = [{id:id,text:`节点层级${id}`},{id:id + 1,text:`节点层级${id}`}];
   	
     temp = temp.children[0];
     leg -- ;
 
   }while(leg>0);
 
-  console.log(testData);
-
   const treeDom = document.createElement("div");
-  			treeDom.innerHTML = `<button id="tail-call">尾调用</button><button id="tail-bounce">尾调用优化</button><div id="tree-test"></div>`;
+  			treeDom.innerHTML = `<button id="tail-call">尾调用</button><button id="tail-bounce">尾调用优化</button><div id="tree-test" class="g-tree"></div><div id="tree-test2" class="g-tree"></div>`;
   			document.body.appendChild(treeDom);
 
+  			DM(".g-tree").css({
+  				width:"300px",
+  				margin:"auto",
+  				border:"1px solid red"
+  			});
+
+  			const a = window as any;
+  			
+			  	a.gTree =  new Tree(DM(".g-tree"),{
+			  	data:testData,
+			  	checkbox:true,
+			  	checkCallback:function(node:any){
+			  		console.log(node,"check")
+			  	},
+			  	
+			  },["11"]);
+
+  			/*DM("#tree-test").css({
+  				width:"300px",
+  				margin:"auto",
+  				border:"1px solid red"
+  			});
 
 
-  new Tree(DM("#tree-test"),{
-  	data:testData,
-  });
+			  new Tree(DM("#tree-test"),{
+			  	data:testData,
+			  	checkbox:true,
+			  	checkCallback:function(node:any){
+			  		console.log(node,"check")
+			  	},
+			  	
+			  });*/
 
   DM("#tail-call").on("click",function(){
 

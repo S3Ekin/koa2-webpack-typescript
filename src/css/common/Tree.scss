@@ -10,14 +10,24 @@ $hover:$themeColor;
 .g-tree-search{
 	display: flex;
 	justify-content: space-between;	
+ 	height: 30px;
+
 	.j-search{
 		
 	}
 	.j-search-close{
-
+	  position: absolute;
+	  right: 5px;
+	  top:8px;
+	  cursor: pointer;
+	}
+	.search-inp{
+		padding-left:1em;
+		padding-right:1.5em;
 	}
 	.m-inp{
 		flex: auto;
+		position: relative;
 	}
 
 
@@ -29,6 +39,25 @@ $hover:$themeColor;
   	width: 1em;
   	display: inline-block;
   }
-	
+  .treeItem{
+  	cursor: pointer;
+  }
+	.has-check{
+		&:before{
+			content:"*";
+			//position: absolute;
+		}
+	}
+	.menu-hide{
+		.j-slide-icon{
+			&:before{
+				content:"\e903";
+			}
+		}
+	}
 
+	.treeItem.node-select{
+		background: $slectColor;
+	}
+ 
 }

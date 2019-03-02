@@ -9,4 +9,6 @@ console.log(232323);
 
 
 
+
+
 export {varibale};
