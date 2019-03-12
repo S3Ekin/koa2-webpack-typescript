@@ -115,7 +115,7 @@ class Tree implements tree {
 
 				 item.dom.forEach((checkbox:HTMLElement)=>{
 
-				 		checkbox.click();
+				 		checkbox.click(); //有些问题 在搜索后在选中默认的会有点击两次的重复
 
 				 })
 
@@ -320,29 +320,45 @@ class Tree implements tree {
 		}
 	}
 
-	upDateSelArr($this:DomUinit){
-
-		//const hasPar = $this.hasClass("par-checkinp");
+	upDateSelArr(gCheckBox:DomUinit){
 
 
-
-				const $box = $this.closest(".g-tree");
+			/*	const $box = $this.closest(".g-tree");
 				const idArr = $box.find(".child-checkinp:checked").dom.map((val:HTMLInputElement)=>val.value);
 				const index = <string>$box.dataset("index");
-				this.selArr[+index] = idArr;
-			
-
+				this.selArr[+index] = idArr;*/
 	
+		 const inp = gCheckBox.children(".tree-inp");
+		 const hasPar = inp.hasClass("par-checkinp");
+		 const boxIndex = <string>gCheckBox.closest(".g-tree").dataset("index");
+		 const val = inp.val();
 
+		 		const selArr = <any[]>this.selArr[+boxIndex];
 
+					if(inp.checked()){
 
-		 /*const boxIndex = <string>inpEl.closest(".g-tree").dataset("index");
-		 const val = inpEl.val();
-					if(checkStatus){
-							this.selArr[+boxIndex].push(val);
+							if(!hasPar){
+								selArr.push(val);
+							}else{
+								const setArr = new Set(selArr);
+								gCheckBox.parent().siblings(".par-menu").find(".child-checkinp").dom.map((val:HTMLInputElement)=>setArr.add(val.value));
+								this.selArr[+boxIndex] = [...setArr];
+							}
+				
 					}else{
-							this.selArr[+boxIndex] = this.selArr[+boxIndex].filter((_val:any)=>_val!=val);
-					}*/
+
+							if(!hasPar){
+								const targetOindex = selArr.findIndex((_val:string)=>_val===val);
+								selArr.splice(targetOindex,1);
+
+							}else{
+
+								const childArr = gCheckBox.parent().siblings(".par-menu").find(".child-checkinp").dom.map((val:HTMLInputElement)=>val.value);
+
+									this.selArr[+boxIndex] = this.selArr[+boxIndex].filter((_val:string)=>!childArr.includes(_val));
+							}
+							
+					}
 
 	}
 	//级联的checkbox
@@ -459,6 +475,9 @@ class Tree implements tree {
 		//搜索
 		this.box.on("click",".j-search",function(){
 				const $this = DM(this);
+				if(!$this.siblings(".m-inp").children(".search-inp").val()){
+					return ;
+				}
 				_self.search($this);
 				$this.siblings(".m-inp").children(".j-search-close").show();
 
@@ -517,7 +536,7 @@ function Test(){
 
   	id+=2 ;
 
-    temp.children = [{id:id,text:`节点层级${id}`},{id:id + 1,text:`节点层级${id}`}];
+    temp.children = [{id:id,text:`节点层级${id}`},{id:id + 1,text:`节点层级${id+1}`}];
   	
     temp = temp.children[0];
     leg -- ;

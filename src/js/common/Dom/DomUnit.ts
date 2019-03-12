@@ -25,7 +25,7 @@ import {animate} from "velocity-animate";
 			children(selctor?:string):DomUinit;
 			getEleStyle(ele:HTMLElement,prop:string,pseudoElt?:string):string;
 			val(value?:string):string|undefined;
-			checked(value:boolean):void;
+			checked(value:boolean):boolean | undefined;
 			attr(prop:string):string|null;
 			eq(oindex:number):DomUinit;
 			dataset(key:string):string | undefined;
@@ -425,11 +425,19 @@ class DomUinit extends EventDom implements SDom{
 	  			return inpDom && inpDom.value;
 	  	}
 	  }
-	  checked(value:boolean=true){
-				
-				this.dom.forEach((val:HTMLInputElement)=>{
+	  checked(value?:boolean){
+
+	  	if(value!==undefined){
+	  		this.dom.forEach((val:HTMLInputElement)=>{
 		  			val.checked = value;
 		  	}); 
+	  	}else{
+	  		const inp = <HTMLInputElement>this.dom[0] ;
+	  		return inp  ? inp.checked : undefined ;
+	  	}
+				
+
+
 	  }
 
 	  attr(prop:string):string|null{
