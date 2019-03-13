@@ -2,6 +2,10 @@ import DM  from "@SDom/Dom/DomUnit";
 import "@CommonCss/Tree.scss";
 type DomUinit = ReturnType< typeof DM>;
 
+type anyObj = {
+	[key:string]:any;
+}
+
 interface treeConfig {
 			"data":any[];//数据
 			"dropParIcon":string;//目录选项的logo
@@ -14,8 +18,8 @@ interface treeConfig {
 			"isAnimate":boolean;
 			"clickCallback":Function|null;//点击后的回调函数
 			"checkCallback":Function|null;//选中的回调函数
-			"width":number | null;
-			"MaxHeight":number; //下拉框的最大高度
+			"width":number | string;
+			"maxHeight":number; //下拉框的最大高度
 			"searchInp":boolean;//inp搜索
 			"searchFile":string[];//搜索的字段
 			"judgeRelation":Function;
@@ -25,11 +29,21 @@ interface tree {
 	 box:DomUinit;
 	 config:treeConfig;
 	 selArr:any[];
-	 renderTreeInit(keyWord:string):void; 
+	 init(defaultArr:(string|number)[]):void;
+	 initSelArr(defaultArr:(string|number)[]):void;
+	 reloadTree($box:DomUinit,dropUlstr:string):void;
+	 selDefault(defaultArr:any[],$box:DomUinit):void;
+	 getOption():treeConfig;
+	 renderSearchInp():string;
+	 findNodeById(id:string):anyObj |undefined;
+	 search($btn:DomUinit):void;
+	 renderTreeInit(keyWord:string):string; 
 	 renderPar(obj:any,node:any,childrenArr:any[],lev:number):string;
 	 renderChild(obj:any,node:any,lev:number):string;
 	 setHasCheck(parItem:DomUinit):void;
-	 cascsdeCheckbox(checkbox:DomUinit):void;
+	 upDateSelArr(gCheckBox:DomUinit):void;
+	 cascsdeCheckbox(checkbox:DomUinit,checkStatus:boolean):void;
+	 slecteNode($this:DomUinit):void;
 	 handle():void;
 };
 
@@ -54,8 +68,8 @@ class Tree implements tree {
 			"isAnimate":true,
 			"clickCallback":null,//点击后的回调函数
 			"checkCallback":null,
-			"width":null,
-			"MaxHeight":280, //下拉框的最大高度
+			"width":"auto",
+			"maxHeight":280, //下拉框的最大高度
 			"searchInp":true,
 			"searchFile":["id"],
 			"judgeRelation":function(val:any){
@@ -64,7 +78,7 @@ class Tree implements tree {
 			}
 		},config);
 		this.selArr = [];
-		this.initSelArr();
+		this.initSelArr(defaultArr);
 		this.handle();
 		this.init(defaultArr);
 		
@@ -83,17 +97,19 @@ class Tree implements tree {
 		 </div>
 	 */
 	init(defaultArr:(string|number)[]=[]){
-		const  tree = `<ul class="m-tree par-menu">${this.renderTreeInit()}</ul>`;
+		const {width,maxHeight} = this.config;
+		const  tree = `<ul class="m-tree par-menu" style="width:${width};max-height:${maxHeight}px">${this.renderTreeInit()}</ul>`;
 		const searchStr = this.renderSearchInp();
 		this.box.html(searchStr+tree);
+
 	  defaultArr.length && this.selDefault(defaultArr,this.box);
 	  
 	}
 
-	initSelArr(){
+	initSelArr(defaultArr:(string|number)[]=[]){
 			this.box.dom.forEach((val:HTMLElement,index:number)=>{
 					val.dataset.index = index+"";
-					this.selArr[index] = [] ;
+					this.selArr[index] = defaultArr ;
 			});
 	}
 
@@ -105,25 +121,23 @@ class Tree implements tree {
        this.selDefault(this.selArr[+index],$box);
 
 	}
-	selDefault(defaultArr:any[],$box:DomUinit){//有初始值
+	selDefault(defaultArr:any[],$box:DomUinit){//有初始值,只负责改变checkbox的状态，不改变任何对象的值包括默认选中的数组selArr
 
 
 
 		defaultArr.forEach((val:(number | string))=>{
 
-				const item =	$box.find(`.treeItem[data-id='${val}'] .tree-inp`);
+				const item =	$box.find(`.treeItem[data-id='${val}'] .m-checkbox`);
 
 				 item.dom.forEach((checkbox:HTMLElement)=>{
 
-				 		checkbox.click(); //有些问题 在搜索后在选中默认的会有点击两次的重复
+				 	//	checkbox.click(); //有些问题 在搜索后在选中默认的会有点击两次的重复
+				 	DM(checkbox).children(".tree-inp").checked(true);
+				 	this.cascsdeCheckbox(DM(checkbox),true)
 
 				 })
 
 		});
-
-		
-
-
 	}
 	getOption(){
 
@@ -148,11 +162,11 @@ class Tree implements tree {
 	findNodeById(id:string){
 		const {data,idField,childField} = this.config;
 	
-		let node;
+		let node:anyObj | undefined;
 
 		let fn = function(arr:any[]):any{
 			
-						return arr.find((val:any)=>{
+						return arr.find((val:anyObj)=>{
 
 								const children = val[childField];
 								const status = val[idField] == id ;
@@ -323,10 +337,7 @@ class Tree implements tree {
 	upDateSelArr(gCheckBox:DomUinit){
 
 
-			/*	const $box = $this.closest(".g-tree");
-				const idArr = $box.find(".child-checkinp:checked").dom.map((val:HTMLInputElement)=>val.value);
-				const index = <string>$box.dataset("index");
-				this.selArr[+index] = idArr;*/
+		
 	
 		 const inp = gCheckBox.children(".tree-inp");
 		 const hasPar = inp.hasClass("par-checkinp");
@@ -362,12 +373,12 @@ class Tree implements tree {
 
 	}
 	//级联的checkbox
-	cascsdeCheckbox(gCheckbox:DomUinit){
+	cascsdeCheckbox(gCheckbox:DomUinit,checkStatus:boolean){
 
 		const {checkCallback} = this.config;
 		const inpEl  = gCheckbox.children(".tree-inp");
 		const is_par = inpEl.hasClass("par-checkinp");
-		const checkStatus = (<HTMLInputElement>inpEl.dom[0]).checked;
+	
 	  let parItem = gCheckbox.parent();
 
 	 
@@ -461,7 +472,8 @@ class Tree implements tree {
 		this.box.on("click",".m-checkbox",function(e:Event){
 			e.stopPropagation();
 			const $this = DM(this);
-		  _self.cascsdeCheckbox($this); 
+			const checkStatus = $this.children(".tree-inp").checked() as boolean;
+		  _self.cascsdeCheckbox($this,checkStatus); 
 		  _self.upDateSelArr($this);
 
 		});
@@ -550,7 +562,7 @@ function Test(){
   			DM(".g-tree").css({
   				width:"300px",
   				margin:"auto",
-  				border:"1px solid red"
+  				border:"1px solid red",
   			});
 
   			const a = window as any;
@@ -558,6 +570,7 @@ function Test(){
 			  	a.gTree =  new Tree(DM(".g-tree"),{
 			  	data:testData,
 			  	checkbox:true,
+			  
 			  	checkCallback:function(node:any){
 			  		console.log(node,"check")
 			  	},

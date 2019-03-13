@@ -36,6 +36,7 @@ $hover:$themeColor;
 
 .m-tree{
 	line-height: 1.5;
+	overflow: auto;
   .tree-indent{
   	width: 1em;
   	display: inline-block;
