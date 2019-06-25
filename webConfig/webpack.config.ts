@@ -16,7 +16,7 @@ class WebpackWebConfig implements Configuration {
 	devtool: Configuration["devtool"] = "inline-source-map";
 	entry = [path.resolve("./", "src/index.ts")];
 	output = {
-		path: path.resolve("./", "public"),
+		path: path.resolve("./", "static"),
 		filename: "js/[name].js"
 	};
 	module = {
@@ -73,7 +73,7 @@ class WebpackWebConfig implements Configuration {
 		//	new webpack.NoEmitOnErrorsPlugin(),
 		new copyPlugin([{
 			from: path.resolve("./", "src/assert"),
-			to: path.resolve("./", "public/assert"),
+			to: path.resolve("./", "static/assert"),
 		}]),
 		new StyleLint({
 			context: path.join("./", "src"),
@@ -116,7 +116,7 @@ class WebpackWebConfig implements Configuration {
 
 			const devPlugin = [
 				new cleanWebpackPlugin(["dist"], {
-					root: path.resolve("./", "public")
+					root: path.resolve("./", "static")
 				}),
 				new MiniCssExtractPlugin({
 					filename: "css/[name].[hash].css",
