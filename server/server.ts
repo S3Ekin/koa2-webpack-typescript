@@ -2,6 +2,9 @@ import app from "./app";
 import * as http from "http";
 import * as webpack from "webpack";
 import WebpackWebConfig from "../webConfig/webpack.config" ;
+import * as koaStatic from "koa-static";
+
+import * as path from "path";
 
 const opn = require("opn");
 const webpackDevMiddle = require("koa-webpack-dev-middleware");
@@ -32,7 +35,7 @@ const devServer = {
 			 	fontSize:20
 		 },
 		 overlayWarnings:true,
-	   path: "/__webpack_hmr",
+	     path: "/__webpack_hmr",
 	};
 const compiler = webpack(config);
 app.use(webpackDevMiddle(compiler,devServer));
@@ -50,7 +53,10 @@ server.listen(3012,()=>{
 if(module.hot){
 
 	module.hot.accept("./app.ts",()=>{
+		console.log("热更新");
 			server.removeListener("request",currentApp);
+			const statics = koaStatic(path.resolve("./","public"));
+			app.use(statics);
 			currentApp = app.callback();
 			server.on("request",currentApp);
 	});

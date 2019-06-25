@@ -5,7 +5,7 @@
     "sourceMap": true,
     "moduleResolution": "node",
     "isolatedModules": true,
-    "target": "es5",
+    "target": "es6",
     "strictNullChecks": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
